@@ -23,13 +23,6 @@ export default defineNuxtConfig({
   //   "@assets": resolve(__dirname, "/assets"),
   // },
 
-  runtimeConfig:{
-    mapsApiKey: process.env.VITE_GOOGLE_MAP_API_KEY,
-    public:{
-      MAPS_URL: process.env.VITE_GOOGLE_MAP_BASE_URL
-    }
-  },
-
   imports: {
     dirs: ["./stores/**"],
   },
