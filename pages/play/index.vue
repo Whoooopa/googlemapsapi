@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="panorama==true && latLng">
+    <div v-if="panorama && latLng.coord">
       <UtilityCustomHeader />
       <MapsGeoguessrPanorama/>
       <UtilityGeoguessrMapKit />
@@ -19,6 +19,8 @@ const latLng = computed(() => mapStore.$state.latLng);
 const panorama = computed(() => mapStore.$state.panorama);
 let distance;
 
+watch(latLng, ()=>{})
+
 onMounted(() => {
   console.log(`${panorama.value} before get rand pano`);
 
@@ -29,15 +31,7 @@ onMounted(() => {
     })
   }else{
 
-    mapStore.GET_RANDOM_PANORAMA().then(()=>{
-      mapStore.$patch({
-      currentDistance: null,
-      currentPoints: null,
-      isPlaying: true,
-      panorama: true,
-    });
-    console.log(`${panorama.value} after get rand pano`);
-    });
+    mapStore.GET_RANDOM_PANORAMA();
 
   }
   

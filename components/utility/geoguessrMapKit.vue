@@ -27,8 +27,6 @@
 const router = useRouter();
 const mapStore = useMapStore();
 const mapKitSize = computed(()=>mapStore.$state.mapKitSize);
-const latLng = computed(() => mapStore.$state.latLng);
-const panorama = computed(() => mapStore.$state.panorama);
 let distance;
 
 function enlarge(){
@@ -67,7 +65,8 @@ function size(){
 
 
 function handleGuess(guessedLatLng){
-    // console.log(`You guessed${guessedLatLng.lat()} and ${guessedLatLng.lng()}`);
+    console.log(guessedLatLng)
+    console.log(`You guessed${guessedLatLng.lat()} and ${guessedLatLng.lng()}`);
     // console.log(`The true coordinate is ${mapStore.$state.defaultView.lat} and ${mapStore.$state.defaultView.ltd}`);
 
     //pure distance
@@ -75,8 +74,9 @@ function handleGuess(guessedLatLng){
     //             Math.abs(guessedLatLng.lng()-mapStore.$state.defaultView.ltd));
 
     //distance in km
-    const latDiff = Math.abs(guessedLatLng.lat()-mapStore.$state.latLng.lat()) * 111;
-    const lngDiff = Math.abs(guessedLatLng.lng()-mapStore.$state.latLng.lng()) * 111;
+    console.log(mapStore.parsedLatLng);
+    const latDiff = Math.abs(guessedLatLng.lat()-mapStore.parsedLatLng.lat) * 111;
+    const lngDiff = Math.abs(guessedLatLng.lng()-mapStore.parsedLatLng.lng) * 111;
 
     distance = Math.hypot(latDiff, lngDiff);
     

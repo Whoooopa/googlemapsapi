@@ -10,17 +10,19 @@ const mapStore = useMapStore();
 const latLngObject = computed(() => mapStore.$state.latLng);
 
 onMounted(() => {
-    initMap(mapStore.$state.latLng);
-    console.log(`${mapStore.$state.latLng.lat()} ${mapStore.$state.latLng.lng()}`);
+    console.log(latLngObject.value.coord.lat);
+    console.log(latLngObject.value.coord);
+    initMap(mapStore.parsedLatLng);
     console.log("pano mounted");
 })
 
 watch(latLngObject, ()=>{
-    initMap(latLngObject.value);
+    initMap(mapStore.parsedLatLng);
 })
 
 function initMap(latLng){
 
+    console.log(latLng.lat);
     const position = latLng;
     const map = new google.maps.Map(document.getElementById('map'), {
         // You configuration goes here

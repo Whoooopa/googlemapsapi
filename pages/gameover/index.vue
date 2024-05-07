@@ -15,9 +15,12 @@ onMounted(() => {
 onUnmounted(() => {
     mapStore.$patch({
         totalPoints: 0,
-        progress: 0,
+        progress: 1,
         summary: [],
         isSummary: false,
+        latLng: {
+            count: 1,
+        }
     });
 })
 </script>

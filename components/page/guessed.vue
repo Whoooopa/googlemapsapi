@@ -24,40 +24,24 @@
     </div>
 </template>
 <script setup>
+import { useLocalStorage } from "@vueuse/core"
 const mapStore = useMapStore();
-const router = useRouter();
 const progress = computed(() => mapStore.$state.progress);
 const maxQuestions = computed(() => mapStore.$state.maxQuestion);
-const latLng = computed(() => mapStore.$state.latLng);
-const guessedLatLng = computed(() => mapStore.$state.currentGuessedLatLng);
 
 onMounted(() => {
     mapStore.$patch({
     isPlaying: false,
-    panorama: false,
-    progress: mapStore.$state.progress + 1,
-  })
+    panorama: null,
+  });
+  mapStore.UPDATE_PROGRESS();
   console.log(mapStore.$state.isPlaying);
 })
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
     console.log("object")
-    // console.log(latLng.value.lat())
-    // console.log(latLng.value.lng())
-    console.log(latLng.value.lat())
-    console.log(latLng.value.lng())
-    const lat = latLng.value.lat();
-    const lng = latLng.value.lng();
-    mapStore.$state.summary.push({
-        lat: lat,
-        lng: lng,
-        guessedLat: guessedLatLng.value.lat,
-        guessedLng: guessedLatLng.value.lng,
-    })
-    mapStore.$patch({
-        latLng: null,
-        totalPoints: mapStore.$state.totalPoints + mapStore.$state.currentPoints,
-    })
+    mapStore.UPDATE_SUMMARY();
+    localStorage.removeItem("latLng");
     
 })
 

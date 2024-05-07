@@ -25,6 +25,11 @@ const maxQuestions = computed(()=>mapStore.$state.maxQuestion);
 const totalPoints = computed(()=>mapStore.$state.totalPoints);
 const router = useRouter();
 
+onMounted(() => {
+    console.log(progress);
+    console.log("Progress is above");
+})
+
 function exit(){
     mapStore.$patch({
         pause: true,

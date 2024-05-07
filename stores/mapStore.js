@@ -1,4 +1,5 @@
-import { defineStore } from 'pinia'
+import { defineStore, skipHydrate } from 'pinia'
+import { useLocalStorage } from "@vueuse/core"
 import axios from 'axios'
 
 
@@ -7,8 +8,11 @@ export const useMapStore = defineStore(
   state: () => {
     return { 
       map_base_url: useRuntimeConfig().public.MAPS_URL,
-      latLng: null,
-      panorama: null,
+      latLng: {
+        coord: useLocalStorage("latLng"),
+        count: useLocalStorage("latLngCount", 1)
+      },
+      panorama: useLocalStorage("panorama", null),
       currentPoints: null,
       currentDistance: null,
       isPlaying: false,
@@ -23,11 +27,11 @@ export const useMapStore = defineStore(
         lat: null,
         lng: null
       },
-      totalPoints: 0,
-      progress: 1,
+      totalPoints: useLocalStorage("totalPoints", 0),
+      progress: useLocalStorage("progress", 1),
       maxQuestion: 5,
       mapKitSize: 0,
-      summary: [],
+      summary: useLocalStorage("summary", []),
 
       jawa: {
         latTop: -6.2,
@@ -45,20 +49,41 @@ export const useMapStore = defineStore(
       
 
     };},
+  getters: {
+      parsedLatLng(state){
+        return JSON.parse(state.latLng.coord);
+      },
+      // getProgress(state){
+      //   return state.progress ? state.progress: 1;
+      // }
+    }
+    ,
   actions: {
-    HandleCallback(data, status){
+    async HandleCallback(data, status){
       console.log(status);
           // console.log(`${data} data outside`);
         if (status == 'OK') {
           // console.log(data);
           // Call your code to display the panorama here.
-          // console.log(data.location.latLng);
-          this.latLng = data.location.latLng;
-          console.log(this.latLng);
+          console.log(data.location);
+          console.log(data.location.latLng.lat());
+          const lat = data.location.latLng.lat();
+          const lng = data.location.latLng.lng();
+          const latLngObject = { lat: lat, lng: lng };
+          this.latLng.coord = JSON.stringify(latLngObject);
+          this.latLng.count = this.progress;
+          console.log("progress vs count");
+          console.log(this.latLng.count);
+          console.log(this.progress)
+          this.currentDistance = null;
+          this.currentPoints = null;
+          this.isPlaying = true;
+          this.panorama = true;
+
     
         } else {
           // Nothing here! Let's try another location.
-          this.TryRandomLocation(this.HandleCallback);
+          await this.TryRandomLocation(this.HandleCallback);
         }
     },
 
@@ -76,11 +101,53 @@ export const useMapStore = defineStore(
 
     async GET_RANDOM_PANORAMA() {
       try{
-      
-        this.TryRandomLocation(this.HandleCallback);
+
+        if (this.latLng.count == 1 || this.latLng.count != this.progress){
+          await this.TryRandomLocation(this.HandleCallback);
+        }
       } catch (error) {
         console.error(error);
       }
+    },
+
+    async UPDATE_PROGRESS() {
+
+      this.progress = this.progress <= this.maxQuestion ? this.progress + 1 : 1 ;
+
+      console.log(this.progress);
+    },
+
+    async UPDATE_SUMMARY() {
+
+      this.summary.push({
+        lat: this.parsedLatLng.lat,
+        lng: this.parsedLatLng.lng,
+        guessedLat: this.currentGuessedLatLng.lat,
+        guessedLng: this.currentGuessedLatLng.lng,
+      })
+
+      console.log(this.summary)
+
+      console.log(this.totalPoints);
+      this.totalPoints = this.totalPoints + this.currentPoints;
+      console.log(this.totalPoints);
+
     }
+
   },
-});
+
+  hydrate(state, initialState) {
+    // in this case we can completely ignore the initial state since we
+    // want to read the value from the browser
+    
+    state.totalPoints = useLocalStorage("totalPoints", 0);
+    state.latLng.coord = useLocalStorage("latLng", {lat: null, lng: null}).value;
+    state.progress = useLocalStorage("progress", 1);
+    state.latLng.count = useLocalStorage("latLngCount", 1);
+    state.panorama = useLocalStorage("panorama", null);
+    state.summary = useLocalStorage("summary", []);
+  
+  },
+},
+);
+

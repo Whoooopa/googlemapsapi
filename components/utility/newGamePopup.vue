@@ -1,5 +1,5 @@
 <template>
-    <div class="absolute w-screen h-screen bg-[rgba(0,0,0,0.5)] flex justify-center items-center">
+    <div class="absolute w-screen h-screen bg-[rgba(0,0,0,0.5)] flex justify-center items-center z-50">
         <div class="w-80 h-56 bg-white shadow-lg rounded-md flex flex-col justify-center gap-10">
             <div class="flex justify-center items-center">
                 You have unfinished game

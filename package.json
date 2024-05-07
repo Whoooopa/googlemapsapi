@@ -14,11 +14,14 @@
     "@googlemaps/js-api-loader": "^1.16.6",
     "@nuxt/ui": "^2.15.2",
     "@pinia/nuxt": "^0.5.1",
+    "@vueuse/core": "^10.9.0",
     "axios": "^1.6.8",
+    "browserify": "^17.0.0",
     "nuxt": "^3.11.2",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
     "vue-mixins": "^0.3.6",
-    "vue-router": "^4.3.0"
+    "vue-router": "^4.3.0",
+    "vue3-carousel": "^0.3.3"
   }
 }

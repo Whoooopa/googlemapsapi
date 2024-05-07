@@ -8,7 +8,6 @@
 const mapStore = useMapStore();
 const emit = defineEmits(['guess']);
 const mapKitSize = computed(()=>mapStore.$state.mapKitSize);
-const currentlyPlaying = computed(() => mapStore.$state.isPlaying);
 const summary = computed(() => mapStore.$state.summary);
 let map1;
 
@@ -48,8 +47,8 @@ function size(){
 const latLngObject = computed(() => mapStore.$state.latLng);
 
 onMounted(() => {
-    console.log("Mounted");
-    console.log(currentlyPlaying.value);
+    // console.log("Mounted");
+    // console.log(currentlyPlaying.value);
     initMap();
 })
 
@@ -59,7 +58,7 @@ onMounted(() => {
 //         console.log("is playing changed");
 //         trueMarker = new google.maps.marker.AdvancedMarkerElement({
 //         map: map1,
-//         position: { lat : mapStore.$state.latLng.lat(), lng : mapStore.$state.latLng.lng() }
+//         position: { lat : mapStore.parsedLatLng.lat, lng : mapStore.parsedLatLng.lng }
 //     })
 //     }
 // });
@@ -151,8 +150,10 @@ function initMap(){
 
     else if(props.isPlaying==false){
 
+        console.log(mapStore.parsedLatLng);
+
         const pathBetweenMarkersCoordinates = [
-            { lat: mapStore.$state.latLng.lat(), lng: mapStore.$state.latLng.lng() },
+            { lat: mapStore.parsedLatLng.lat, lng: mapStore.parsedLatLng.lng },
             { lat: mapStore.$state.currentGuessedLatLng.lat, lng: mapStore.$state.currentGuessedLatLng.lng }
         ];
 
@@ -169,7 +170,7 @@ function initMap(){
 
         markers.push(new google.maps.marker.AdvancedMarkerElement({
             map: map1,
-            position: { lat : mapStore.$state.latLng.lat(), lng : mapStore.$state.latLng.lng() },
+            position: { lat : mapStore.parsedLatLng.lat, lng : mapStore.parsedLatLng.lng },
             content: truePinStyle.element,
         }));
 
@@ -194,7 +195,7 @@ function initMap(){
 
         // const trueMarker = new google.maps.marker.AdvancedMarkerElement({
         //     map: map1,
-        //     position: { lat : mapStore.$state.latLng.lat(), lng : mapStore.$state.latLng.lng() },
+        //     position: { lat : mapStore.parsedLatLng.lat, lng : mapStore.parsedLatLng.lng },
         //     content: truePinStyle.element,
         // });
 
@@ -218,6 +219,8 @@ function initMap(){
         })
     
         map1.addListener("click", (event)=>{
+            console.log(event);
+            console.log(event.latLng);
             marker.position = event.latLng;
             mapStore.$state.currentGuessedLatLng.lat = event.latLng.lat();
             mapStore.$state.currentGuessedLatLng.lng = event.latLng.lng();

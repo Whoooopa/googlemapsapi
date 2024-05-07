@@ -1,8 +1,5 @@
 <template>
-    <UtilityNewGamePopup 
-    v-if="confirmation"
-    @confirmation="handleGeoguessr"/>
-    <div class="w-64 h-60 flex flex-col">
+    <div class="w-64 h-60 flex flex-col shadow-xl">
         <div class="h-48 bg-amber-500 rounded-t-md"></div>
         <div class="h-12 bg-purple-800 flex justify-center items-center rounded-b-md">
             <button 
@@ -36,35 +33,14 @@ watch(confirmation,() => {
 
 function handleConfirmation(){
 
-    if(totalPoints.value!=0)
-    mapStore.$patch({
-        confirmation: true,
-    }) 
+    if(totalPoints.value!=0){
+        mapStore.$patch({
+            confirmation: true,
+        })
+    }
     else{
     router.push({ name: 'play' });
     }
-}
-
-function handleGeoguessr(action){
-    
-    if(action=="New Game"){
-        console.log("aaa");
-        mapStore.$patch({
-            totalPoints: 0,
-            progress: 0,
-            summary: [],
-            isSummary: false,
-            pause: false,
-            panorama: false,
-            latLng: null,
-        });
-    }
-    
-    mapStore.$patch({
-        confirmation: false,
-    })
-    router.push({ name: 'play' });
-
 }
 </script>
 

@@ -16,8 +16,6 @@ onMounted(() => {
 
     mapStore.$patch({
     isPlaying: false,
-    panorama: false,
-    latLng: null,
     currentPoints: null,
     currentDistance: null,
     currentGuessedLatLng: {
@@ -28,4 +26,5 @@ onMounted(() => {
   })
   console.log(mapStore.$state.isPlaying);
 })
+
 </script>
