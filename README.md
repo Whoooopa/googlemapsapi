@@ -1,3 +1,15 @@
+# About
+
+Disclaimer: i do not own the ideas of apps within this code, This project's sole purpose is to show my own capability of replicating existing ideas of google maps API usage using NuxtJS
+
+# How to run
+
+Get the API key first in
+https://developers.google.com/maps/documentation/javascript/get-api-key
+copy the key inside .env file
+VITE_GOOGLE_MAP_API_KEY = "APIkeyhere"
+
+
 # Nuxt 3 Minimal Starter
 
 Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
