@@ -8,6 +8,7 @@
       v-for="menu in menus" :key="menu.name">
         <CardSelector
         :name="menu.name"
+        :img="menu.img"
         />
       </v3c-slide>
     </template>
@@ -47,16 +48,19 @@ const menus = [
   "idx": 1,
   "name": "Map",
   "bgimg": "earth-from-space-2.jpg",
+  "img": "map.jpeg",
   },
   {
   "idx": 2,
   "name": "Geoguessr",
   "bgimg": "earth-from-space.jpg",
+  "img": "earth.jpeg",
   },
   {
   "idx": 3,
   "name": "???",
   "bgimg": "earth-with-aurora.jpg",
+  "img": "map.jpeg",
   },
   
   

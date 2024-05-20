@@ -22,6 +22,11 @@ export default defineNuxtConfig({
   //   "@": resolve(__dirname, "/"),
   //   "@assets": resolve(__dirname, "/assets"),
   // },
+  runtimeConfig: {
+    public: {
+      PLACE_BASE_URL: process.env.PLACE_BASE_URL,
+    }
+  },
 
   imports: {
     dirs: ["./stores/**"],

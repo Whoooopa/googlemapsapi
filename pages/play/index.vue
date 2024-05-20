@@ -5,9 +5,8 @@
       <MapsGeoguessrPanorama/>
       <UtilityGeoguessrMapKit />
     </div>
-    <div v-else>
-      Loading...
-    </div>
+    <MapsGeoguessrLoading 
+    v-else/>
   </div>
 </template>
 <script setup>
@@ -42,3 +41,5 @@ onMounted(() => {
 //   TryRandomPanorama(HandleCallback);
 // }
 </script>
+<style scoped>
+</style>

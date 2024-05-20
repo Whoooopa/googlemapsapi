@@ -7,6 +7,7 @@
 </template>
 
 <script setup>
+
 import {loadedGoogleMapsAPI} from '@/main'
 const mapStore = useMapStore();
 

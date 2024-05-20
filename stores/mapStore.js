@@ -1,5 +1,6 @@
 import { defineStore, skipHydrate } from 'pinia'
 import { useLocalStorage } from "@vueuse/core"
+import { mapInstance, placeInstance } from '~/composables/maps';
 import axios from 'axios'
 
 
@@ -7,7 +8,6 @@ export const useMapStore = defineStore(
 "mapStore",{
   state: () => {
     return { 
-      map_base_url: useRuntimeConfig().public.MAPS_URL,
       latLng: {
         coord: useLocalStorage("latLng"),
         count: useLocalStorage("latLngCount", 1)
@@ -45,14 +45,30 @@ export const useMapStore = defineStore(
       defaultView: {
         lat: -6.2,
         ltd: 106.816666,
-      }
+      },
+
+      // Map menu
+      textSearchResponse: null,
+      photoURI: null,
+      responseLoading: false,
+      nearbySearchResult: [],
       
 
     };},
   getters: {
+
+      parsedTextSearchResponse(state){
+        return toRaw(state.textSearchResponse);
+      },
       parsedLatLng(state){
         return JSON.parse(state.latLng.coord);
       },
+      parsedNearbySearchResponse(state){
+        return toRaw(state.nearbySearchResult);
+      },
+      linkToMap(state){
+        return `https://www.google.com/maps/search/?api=1&query=${this.parsedTextSearchResponse.location.latitude}%2C${this.parsedTextSearchResponse.location.longitude}&query_place_id=${this.parsedTextSearchResponse.id}`; // no api key required for this one
+      }
       // getProgress(state){
       //   return state.progress ? state.progress: 1;
       // }
@@ -132,7 +148,134 @@ export const useMapStore = defineStore(
       this.totalPoints = this.totalPoints + this.currentPoints;
       console.log(this.totalPoints);
 
-    }
+    },
+
+    async TEXT_SEARCH_PLACE(query) {
+
+      try {
+        this.responseLoading = true;
+        const response = await placeInstance.post(':searchText',
+          {
+            textQuery: query,
+            pageSize: 1,
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.photos,places.rating,places.reviews,places.location'
+            }
+          }
+        );
+
+        this.textSearchResponse = response.data.places[0];
+        console.log(toRaw(this.textSearchResponse));
+        this.GET_IMAGE_FROM_PLACE();
+      }
+      catch (error) {
+        console.log(error);
+      }
+    },
+
+    async NEARBY_SEARCH_PLACE(type) {
+      try{
+        const response = await placeInstance.post(':searchNearby',{
+          locationRestriction: {
+            circle: {
+              center: {
+                latitude: this.currentUserLocation.lat,
+                longitude: this.currentUserLocation.lng,
+              },
+              radius: 1000
+            } 
+          },
+          includedPrimaryTypes: [type],
+          maxResultCount: 5,
+          languageCode: "en-US",
+          rankPreference: 'DISTANCE'
+        }, {
+          headers: {
+            'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.businessStatus'
+          }
+        })
+        console.log(response);
+        this.nearbySearchResult = response.data.places;
+        console.log(this.nearbySearchResult);
+      }
+      catch(e){
+        console.log(e);
+      }
+    },
+
+    async GET_IMAGE_FROM_PLACE() {
+
+      try{
+        //photos.name format is places/place_id/photos/photo_id
+        // append '/media' to access the photo
+        const photoName = this.parsedTextSearchResponse.photos[0].name;
+        const trimmedName = photoName.replace("places", "") + "/media";
+        console.log(trimmedName);
+        // base url ends with places, photos name starts with places/
+
+        const response = await placeInstanceWithoutXGoog.get(trimmedName, {
+          params: {
+            skipHttpRedirect: true, //return json instead of image
+            maxHeightPx: 400,
+            maxWidthPx: 400,
+          }
+        })
+        this.photoURI = response.data.photoUri;
+        console.log(this.photoURI);
+      }
+      catch(error){
+        this.photoURI = null;
+        console.log(error);
+      }
+      finally{
+        this.responseLoading = false;
+      }
+    
+    },
+
+    async GET_PLACE_DETAILS(placeId) {
+      try{
+        this.responseLoading = true;
+        const response = await placeInstance.get("/"+placeId,{
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-FieldMask': 'id,displayName,formattedAddress,photos,rating,reviews,location'
+          }
+        });
+        console.log(response.data);
+        this.textSearchResponse = response.data;
+        this.GET_IMAGE_FROM_PLACE();
+      }
+      catch (e){
+        console.log(e);
+      }
+    },
+
+    // latitude , longitude -> place id
+    async REVERSE_GEOCODE(latLng) {
+      try{
+        console.log(latLng);
+        const lat = latLng.lat();
+        const lng = latLng.lng();
+        console.log(`${lng}`)
+        const response = await mapInstance.get("geocode/json",{
+          params: {
+            latlng: `${lat},${lng}`
+          }
+        })
+        console.log(response.data);
+        console.log(response.data.results);
+        const result = response.data.results[0];
+        console.log(result);
+        return result;
+      }
+      catch(e){
+        console.log(e);
+      }
+    },
 
   },
 
@@ -151,3 +294,7 @@ export const useMapStore = defineStore(
 },
 );
 
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useMapStore, import.meta.hot));
+}

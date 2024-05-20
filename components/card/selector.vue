@@ -1,6 +1,9 @@
 <template>
     <div class="w-64 h-60 flex flex-col shadow-xl">
-        <div class="h-48 bg-amber-500 rounded-t-md"></div>
+        <div class="h-48 bg-amber-500 rounded-t-md"
+        :style="{ backgroundImage: 'url(' +getImage(img) + ') ',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '100% 90%'}"></div>
         <div class="h-12 bg-purple-800 flex justify-center items-center rounded-b-md">
             <button 
                 class="w-max px-4 bg-blue-400 rounded-full align-middle"
@@ -25,12 +28,11 @@ const mapStore = useMapStore();
 const props = defineProps({
     name: {
         type: String,
+    },
+    img: {
+        type: String,
     }
 })
-watch(confirmation,() => {
-    console.log(confirmation.value);
-})
-
 function handleConfirmation(){
 
     if(totalPoints.value!=0){
