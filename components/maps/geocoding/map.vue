@@ -28,6 +28,7 @@
     <CardSearchResult 
       v-if="responseBar"
       :photo-uri="photoUri"
+      @compute-route="handleComputeRoute"
     />
 </div>
 </template>
@@ -42,6 +43,7 @@ const photoUri = computed(()=> mapStore.$state.photoURI);
 const nearbySearchResult = computed(()=> mapStore.$state.nearbySearchResult);
 const textSearchResponse = computed(()=> mapStore.$state.textSearchResponse);
 let map2;
+let path;
 let service;
 let marker, infoWindow;
 let markers = [];
@@ -119,6 +121,43 @@ defineShortcuts({
   }
 })
 
+async function handleComputeRoute(){
+  await mapStore.COMPUTE_ROUTE();
+
+  const coordinates = mapStore.parsedRouteCoordinates;
+  console.log(coordinates);
+
+  if(path) {
+    path.setMap(null);
+  }
+  path = new google.maps.Polyline({
+    path: coordinates,
+    strokeColor: "#00FF00",
+    strokeOpacity: 2.0,
+    strokeWeight: 2,
+  });
+
+  path.setMap(map2);
+
+
+
+
+  const bounds = new google.maps.LatLngBounds();
+
+
+  coordinates.forEach((coor)=>{
+    bounds.extend(coor);
+  })
+  const lat = mapStore.parsedTextSearchResponse.location.latitude;
+  const lng = mapStore.parsedTextSearchResponse.location.longitude;
+  bounds.extend({lat:lat, lng:lng});
+  // extend current user location
+  infoWindow.open(map2);
+  bounds.extend({ lat: mapStore.$state.currentUserLocation.lat, lng: mapStore.$state.currentUserLocation.lng });
+
+  map2.fitBounds(bounds);
+}
+
 function getCurrentLocation(){
     clear();
     infoWindow = new google.maps.InfoWindow();
@@ -188,6 +227,10 @@ function initMap(){
 }
 
 function clear() {
+
+    if(path){
+      path.setMap(null);
+    }
 
     try{
       try{

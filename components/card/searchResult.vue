@@ -45,6 +45,11 @@
         >
           Open in google maps
         </a>
+        <button class="rounded-md bg-green-500 text-white font-medium py-1 flex justify-center cursor-pointer"
+        @click="$emit('computeRoute')"
+        v-if="userLocation.lat">
+          See route
+        </button>
       </div>
   </div>
 </template>
@@ -55,6 +60,7 @@ const responseText = computed(()=> mapStore.$state.textSearchResponse.displayNam
 const rating = computed(()=> mapStore.$state.textSearchResponse.rating);
 const formattedAddress = computed(()=> mapStore.$state.textSearchResponse.formattedAddress);
 const loading = computed(()=> mapStore.$state.responseLoading);
+const userLocation = computed(()=> mapStore.$state.currentUserLocation);
 
 const props = defineProps({
   photoUri: String,

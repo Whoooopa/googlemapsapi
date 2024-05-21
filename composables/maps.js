@@ -27,5 +27,13 @@ const mapInstance = axios.create({
   }
 });
 
+const routeInstance = axios.create({
+  baseURL: import.meta.env.VITE_ROUTE_BASE_URL,
+  allowAbsoluteUrls: false,
+  headers: {
+    'X-Goog-Api-Key': import.meta.env.VITE_GOOGLE_MAP_API_KEY
+  }
+})
 
-export { placeInstance, placeInstanceWithoutXGoog, mapInstance };
+
+export { placeInstance, placeInstanceWithoutXGoog, mapInstance, routeInstance };

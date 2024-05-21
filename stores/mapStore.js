@@ -52,7 +52,9 @@ export const useMapStore = defineStore(
       photoURI: null,
       responseLoading: false,
       nearbySearchResult: [],
-      
+      routeEncoder: null,
+      route: null,
+      routeCoordinates: null,
 
     };},
   getters: {
@@ -65,6 +67,15 @@ export const useMapStore = defineStore(
       },
       parsedNearbySearchResponse(state){
         return toRaw(state.nearbySearchResult);
+      },
+      parsedRoute(state){
+        return toRaw(state.route);
+      },
+      rawEncoder(state){
+        return toRaw(state.routeEncoder);
+      },
+      parsedRouteCoordinates(state){
+        return toRaw(state.routeCoordinates);
       },
       linkToMap(state){
         return `https://www.google.com/maps/search/?api=1&query=${this.parsedTextSearchResponse.location.latitude}%2C${this.parsedTextSearchResponse.location.longitude}&query_place_id=${this.parsedTextSearchResponse.id}`; // no api key required for this one
@@ -276,6 +287,75 @@ export const useMapStore = defineStore(
         console.log(e);
       }
     },
+
+    async COMPUTE_ROUTE(){
+      try{
+        if(!this.routeEncoder) {
+          try{
+            const {encoding} = await google.maps.importLibrary("geometry");
+            console.log(encoding);
+            this.routeEncoder = encoding;
+
+          }
+          catch(e){
+            console.log(e);
+          }
+        }
+        console.log(this.rawEncoder);
+        // console.log(this.parsedTextSearchResponse.location.latitude);
+        // console.log(this.parsedTextSearchResponse.location.longitude);
+        // console.log(this.$state.currentUserLocation.lat);
+        // console.log(this.$state.currentUserLocation.lng);
+        const response = await routeInstance.post("directions/v2:computeRoutes",
+          {
+            origin: {
+              location: {
+                latLng: {
+                  latitude: this.$state.currentUserLocation.lat,
+                  longitude: this.$state.currentUserLocation.lng
+                }
+              }
+            },
+            destination: {
+              location: {
+                latLng: {
+                  latitude: this.parsedTextSearchResponse.location.latitude,
+                  longitude: this.parsedTextSearchResponse.location.longitude
+                }
+              }
+            },
+            travelMode: "DRIVE",
+            routingPreference: "TRAFFIC_AWARE",
+            computeAlternativeRoutes: false,
+            routeModifiers: {
+              avoidTolls: false,
+              avoidHighways: false,
+              avoidFerries: false
+            }
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline' //https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes#response-body
+            }
+          }
+        );
+
+        this.route = response.data.routes[0];
+        console.log(response);
+        console.log(this.route);
+
+        console.log(this.parsedRoute);
+        const coordinates = this.rawEncoder.decodePath(this.parsedRoute.polyline.encodedPolyline);
+        console.log(coordinates);
+        this.routeCoordinates = coordinates;
+        console.log(this.routeCoordinates);
+        
+      }
+      catch(e){
+        console.log(e);
+      }
+    }
 
   },
 
