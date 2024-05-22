@@ -34,6 +34,7 @@
 </template>
 <script setup>
 
+
 const mapStore = useMapStore();
 const responseBar = ref(false);
 const responseText = ref();
@@ -48,11 +49,6 @@ let service;
 let marker, infoWindow;
 let markers = [];
 
-watch(() => {
-
-})
-
-const selectedTags = ref([]);
 const tags = [
   {
     displayName: "restaurant",
@@ -96,8 +92,6 @@ const toggleTag = (tag) =>{
     tag.selected.value = false;
   })
   tag.selected.value = true;
-  selectedTags.value = [];
-  selectedTags.value.push(tag.queryName);
   clear();
   nearbySearch(tag.queryName);
 };
@@ -121,41 +115,54 @@ defineShortcuts({
   }
 })
 
-async function handleComputeRoute(){
-  await mapStore.COMPUTE_ROUTE();
+async function handleComputeRoute(mode){
 
-  const coordinates = mapStore.parsedRouteCoordinates;
-  console.log(coordinates);
+  console.log(mode);
 
-  if(path) {
-    path.setMap(null);
+  await mapStore.COMPUTE_ROUTE(mode.queryName);
+
+
+  if(mapStore.parsedRoute(mode.queryName).length && mapStore.parsedRoute(mode.queryName)[0].availability){
+
+    // is done now draw the markers
+    console.log(mapStore.parsedRoute(mode.queryName)[0].route.coordinates);
+  
+    const coordinates = mapStore.parsedRoute(mode.queryName)[0].route.coordinates;
+    console.log(coordinates);
+  
+    if(path) {
+      path.setMap(null);
+    }
+    path = new google.maps.Polyline({
+      path: coordinates,
+      strokeColor: "#00FF00",
+      strokeOpacity: 2.0,
+      strokeWeight: 2,
+    });
+  
+    path.setMap(map2);
+  
+    const bounds = new google.maps.LatLngBounds();
+  
+  
+    coordinates.forEach((coor)=>{
+      bounds.extend(coor);
+    })
+    const lat = mapStore.parsedTextSearchResponse.location.latitude;
+    const lng = mapStore.parsedTextSearchResponse.location.longitude;
+    bounds.extend({lat:lat, lng:lng});
+    // extend current user location
+    infoWindow.open(map2);
+    bounds.extend({ lat: mapStore.$state.currentUserLocation.lat, lng: mapStore.$state.currentUserLocation.lng });
+  
+    map2.fitBounds(bounds);
+  } else {
+    alert("gak ada rutenya bang");
+    
+    if(path){
+      path.setMap(null);
+    }
   }
-  path = new google.maps.Polyline({
-    path: coordinates,
-    strokeColor: "#00FF00",
-    strokeOpacity: 2.0,
-    strokeWeight: 2,
-  });
-
-  path.setMap(map2);
-
-
-
-
-  const bounds = new google.maps.LatLngBounds();
-
-
-  coordinates.forEach((coor)=>{
-    bounds.extend(coor);
-  })
-  const lat = mapStore.parsedTextSearchResponse.location.latitude;
-  const lng = mapStore.parsedTextSearchResponse.location.longitude;
-  bounds.extend({lat:lat, lng:lng});
-  // extend current user location
-  infoWindow.open(map2);
-  bounds.extend({ lat: mapStore.$state.currentUserLocation.lat, lng: mapStore.$state.currentUserLocation.lng });
-
-  map2.fitBounds(bounds);
 }
 
 function getCurrentLocation(){
@@ -329,9 +336,21 @@ async function findPlaces() {
 
 // geocode can only take exact place name
 async function geocode(request) {
+
+  const requestedLat = request.location.lat();
+  const requestedLng = request.location.lng();
+  const previousLat = mapStore.parsedTextSearchResponse.location.latitude;
+  const previousLng = mapStore.parsedTextSearchResponse.location.longitude;
+
+  // Define a small threshold for comparison
+  const threshold = 0.00005; // Roughly 5.5 meters in latitude/longitude
+  // if user click within the area of 5.5 meters of the previous coordinate dont send request
+  // this assumes user click the same place
+  // * efficiency *
+  if(Math.abs(previousLat - requestedLat) > threshold || Math.abs(previousLng - requestedLng) > threshold){
     clear();
     const result = await mapStore.REVERSE_GEOCODE(request.location);
-  
+    
     map2.setCenter(result.geometry.location);
     marker.position = result.geometry.location;
     marker.setMap(map2);
@@ -344,6 +363,7 @@ async function geocode(request) {
     const bounds = new google.maps.LatLngBounds();
     bounds.extend(result.geometry.location);
     map2.fitBounds(bounds);
+  }
 }
 
 </script>

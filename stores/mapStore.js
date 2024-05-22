@@ -53,8 +53,8 @@ export const useMapStore = defineStore(
       responseLoading: false,
       nearbySearchResult: [],
       routeEncoder: null,
-      route: null,
-      routeCoordinates: null,
+      routes: [],
+      routeCoordinates: [],
 
     };},
   getters: {
@@ -69,7 +69,17 @@ export const useMapStore = defineStore(
         return toRaw(state.nearbySearchResult);
       },
       parsedRoute(state){
-        return toRaw(state.route);
+        const routes = toRaw(state.routes);
+        // getters cant receive params -_- but can return function that is able to receive param
+        function checkMode(mode){
+          if(mode == "all") return routes;
+          else{
+            return routes.filter((route)=>{
+              return route.mode == mode;
+            });
+          }
+        }
+        return checkMode;
       },
       rawEncoder(state){
         return toRaw(state.routeEncoder);
@@ -268,9 +278,11 @@ export const useMapStore = defineStore(
     // latitude , longitude -> place id
     async REVERSE_GEOCODE(latLng) {
       try{
-        console.log(latLng);
+        console.log(`${latLng.lat().toFixed(5) }, ${latLng.lng().toFixed(5)}`);
+        console.log(`${this.parsedTextSearchResponse.location.latitude.toFixed(5)}, ${this.parsedTextSearchResponse.location.longitude.toFixed(5)}`);
         const lat = latLng.lat();
         const lng = latLng.lng();
+
         console.log(`${lng}`)
         const response = await mapInstance.get("geocode/json",{
           params: {
@@ -282,14 +294,22 @@ export const useMapStore = defineStore(
         const result = response.data.results[0];
         console.log(result);
         return result;
+        
       }
       catch(e){
         console.log(e);
       }
     },
 
-    async COMPUTE_ROUTE(){
+    async COMPUTE_ROUTE(mode){
+
+      
+      console.log(this.parsedTextSearchResponse); 
+      const { photos, rating, reviews, ...placeInfos } = this.parsedTextSearchResponse;
+      // placeInfos have id, displayName: {text, languageCode}, formattedAddress, location: {latitude,longitude}
       try{
+        console.log(mode);
+        // if no encoder import encoder
         if(!this.routeEncoder) {
           try{
             const {encoding} = await google.maps.importLibrary("geometry");
@@ -302,58 +322,113 @@ export const useMapStore = defineStore(
           }
         }
         console.log(this.rawEncoder);
+
+        console.log(this.parsedRoute(mode));
+        console.log(this.parsedRoute(mode)[0]);
+
+        // if previously saved routes destination differ from current textSearchResponse (if user changes destination)
+        if(this.parsedRoute(mode).length != 0 && this.parsedRoute(mode)[0].destination.id != this.parsedTextSearchResponse.id){
+          this.routes = [];
+        }
+
+        // if state.routes array doesn't have object with object.mode == mode request route
+        if(this.parsedRoute(mode).length == 0) {
+          const response = await routeInstance.post("directions/v2:computeRoutes",
+            {
+              origin: {
+                location: {
+                  latLng: {
+                    latitude: this.$state.currentUserLocation.lat,
+                    longitude: this.$state.currentUserLocation.lng
+                  }
+                }
+              },
+              destination: {
+                location: {
+                  latLng: {
+                    latitude: this.parsedTextSearchResponse.location.latitude,
+                    longitude: this.parsedTextSearchResponse.location.longitude
+                  }
+                }
+              },
+              travelMode: `${mode}`,
+              routingPreference: "TRAFFIC_AWARE",
+              computeAlternativeRoutes: false,
+              routeModifiers: {
+                avoidTolls: false,
+                avoidHighways: false,
+                avoidFerries: false
+              }
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline' //https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes#response-body
+              }
+            }
+          );
+          console.log(response);
+
+          const route = response.data.routes[0];
+          const coordinates = this.rawEncoder.decodePath(route.polyline.encodedPolyline);
+
+          console.log(coordinates);
+          console.log(route);
+          
+
+
+          
+
+          this.routes.push({
+            mode: mode,
+            route: {
+              ...route,  // route object in routes array have distanceMeters, duration , polyline.encodedPolyline if request was successful
+              coordinates: coordinates, // array of latLng object , has lat(), lng() function
+            },
+            availability: true,
+            destination: {
+              ...placeInfos
+            }
+          });
+          console.log("New request T_T");
+
+         
+          
+          // const coordinates = this.rawEncoder.decodePath(this.parsedRoute.polyline.encodedPolyline);
+          // console.log(this.parsedRoute);
+          // console.log(coordinates);
+          // this.routeCoordinates = coordinates;
+          // console.log(this.routeCoordinates);
+        } else {
+          console.log("No API call *_*");
+        }
         // console.log(this.parsedTextSearchResponse.location.latitude);
         // console.log(this.parsedTextSearchResponse.location.longitude);
         // console.log(this.$state.currentUserLocation.lat);
         // console.log(this.$state.currentUserLocation.lng);
-        const response = await routeInstance.post("directions/v2:computeRoutes",
-          {
-            origin: {
-              location: {
-                latLng: {
-                  latitude: this.$state.currentUserLocation.lat,
-                  longitude: this.$state.currentUserLocation.lng
-                }
-              }
-            },
-            destination: {
-              location: {
-                latLng: {
-                  latitude: this.parsedTextSearchResponse.location.latitude,
-                  longitude: this.parsedTextSearchResponse.location.longitude
-                }
-              }
-            },
-            travelMode: "DRIVE",
-            routingPreference: "TRAFFIC_AWARE",
-            computeAlternativeRoutes: false,
-            routeModifiers: {
-              avoidTolls: false,
-              avoidHighways: false,
-              avoidFerries: false
-            }
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline' //https://developers.google.com/maps/documentation/routes/reference/rest/v2/TopLevel/computeRoutes#response-body
-            }
-          }
-        );
-
-        this.route = response.data.routes[0];
-        console.log(response);
-        console.log(this.route);
-
-        console.log(this.parsedRoute);
-        const coordinates = this.rawEncoder.decodePath(this.parsedRoute.polyline.encodedPolyline);
-        console.log(coordinates);
-        this.routeCoordinates = coordinates;
-        console.log(this.routeCoordinates);
+        console.log(this.parsedRoute("all"));
+        
         
       }
       catch(e){
-        console.log(e);
+        // console.log(e);
+        // console.log(e.response.data.error.message);
+        // if no error message is no route available, push object with false availability
+        const msg = e.response.data.error.message;
+        if(msg.startsWith("Routing preference cannot be set for")){
+          
+          if(this.parsedRoute(mode).length == 0){
+            this.routes.push({
+              mode: mode,
+              route: null,
+              availability: false,
+              destination: {
+                ...placeInfos
+              }
+            });
+          }
+        }
+        console.log(this.parsedRoute("all"));
       }
     }
 
