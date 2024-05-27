@@ -6,7 +6,6 @@
           <div class="w-32 bg-slate-400 flex justify-center items-center shadow-lg cursor-pointer" @click="findPlaces"
           v-on:keyup.13="findPlaces">Search</div>
           <div class="w-32 bg-slate-400 flex justify-center items-center shadow-lg cursor-pointer" @click="clear">Clear</div>
-          <div class="w-32 bg-slate-400 flex justify-center items-center shadow-lg cursor-pointer" @click="getCurrentLocation">Find Me</div>
           <div class="w-32 bg-red-500 flex justify-center items-center shadow-lg cursor-pointer text-white"
           @click="router.push('/')">Exit</div>
       </div>
@@ -104,6 +103,7 @@ onMounted(() => {
     console.log("Mounted");
     console.log(userPosition.value);
     initMap();
+    getCurrentLocation();
 })
 
 defineShortcuts({
@@ -118,12 +118,19 @@ defineShortcuts({
 async function handleComputeRoute(mode){
 
   console.log(mode);
+  if(!userPosition.value.lat){
+      getCurrentLocation();
+  }
 
+  console.log("Computing routes....");
   await mapStore.COMPUTE_ROUTE(mode.queryName);
+  console.log(mapStore.parsedRoute('all'));
+  console.log("done");
 
 
   if(mapStore.parsedRoute(mode.queryName).length && mapStore.parsedRoute(mode.queryName)[0].availability){
 
+    console.log(mapStore.parsedRoute('all'));
     // is done now draw the markers
     console.log(mapStore.parsedRoute(mode.queryName)[0].route.coordinates);
   
@@ -152,12 +159,15 @@ async function handleComputeRoute(mode){
     const lng = mapStore.parsedTextSearchResponse.location.longitude;
     bounds.extend({lat:lat, lng:lng});
     // extend current user location
+    
+    infoWindow = new google.maps.InfoWindow();
+    infoWindow.setPosition(userPosition.value);
+    infoWindow.setContent("You are here");
     infoWindow.open(map2);
-    bounds.extend({ lat: mapStore.$state.currentUserLocation.lat, lng: mapStore.$state.currentUserLocation.lng });
+    bounds.extend({ lat: userPosition.value.lat, lng: userPosition.value.lng });
   
     map2.fitBounds(bounds);
   } else {
-    alert("gak ada rutenya bang");
     
     if(path){
       path.setMap(null);

@@ -61,56 +61,45 @@
         <v-card-text>
           <v-tabs-window v-model="tab">
             <v-tabs-window-item v-for="mode in transportMode" :value="`${mode.title}`">
-              <div
-              v-if="mapStore.parsedRoute(mode.queryName).length">
-                <div class="flex flex-col gap-4 px-3"
-                v-if="mapStore.parsedRoute(mode.queryName)[0].availability">
-                  <div class="flex justify-between">
+              <div v-if="!transportLoading">
 
-                    <span class="text-sm font-medium">
-                      Distance :
-                    </span>
-
-                    <span class="text-sm font-medium">
-                      {{ mapStore.parsedRoute(mode.queryName)[0].route.distanceMeters > 1000 ? 
-                      mapStore.parsedRoute(mode.queryName)[0].route.distanceMeters / 1000 + " km" : 
-                      mapStore.parsedRoute(mode.queryName)[0].route.distanceMeters + " m" }}
-                    </span>
-                  </div>
-
-                  
-                  <div class="flex justify-between">
-
-                    <span class="text-sm font-medium">
-                      Duration :
-                    </span>
-
-                    <span class="text-sm font-medium">{{ secondsToHHmmss(mapStore.parsedRoute(mode.queryName)[0].route.duration.slice(0, -1)) }}</span>
-                  </div>
-                </div>
                 <div
-                v-else>
-                  tidak ditemukan rute dengan transportasi ini
+                v-if="mapStore.parsedRoute(mode.queryName).length">
+                  <div class="flex flex-col gap-4 px-3"
+                  v-if="mapStore.parsedRoute(mode.queryName)[0].availability">
+                    <div class="flex justify-between">
+  
+                      <span class="text-sm font-medium">
+                        Distance :
+                      </span>
+  
+                      <span class="text-sm font-medium">
+                        {{ mapStore.parsedRoute(mode.queryName)[0].route.distanceMeters > 1000 ? 
+                        mapStore.parsedRoute(mode.queryName)[0].route.distanceMeters / 1000 + " km" : 
+                        mapStore.parsedRoute(mode.queryName)[0].route.distanceMeters + " m" }}
+                      </span>
+                    </div>
+  
+                    
+                    <div class="flex justify-between">
+  
+                      <span class="text-sm font-medium">
+                        Duration :
+                      </span>
+  
+                      <span class="text-sm font-medium">{{ secondsToHHmmss(mapStore.parsedRoute(mode.queryName)[0].route.duration.slice(0, -1)) }}</span>
+                    </div>
+                  </div>
+                  <div
+                  v-else>
+                    tidak ditemukan rute dengan transportasi ini
+                  </div>
                 </div>
               </div>
               <div
-              v-else> 
-                <USkeleton class="h-4 w-full"/>
-                <USkeleton class="h-4 w-full"/>
-              </div>
-              <!-- <div class="flex flex-col justify-start gap-4 px-4"
-              v-if=" mapStore.parsedRoute(mode.queryName)[0].availability ">
-                <span>{{ mapStore.parsedRoute(mode.queryName).route.distanceMeters }}</span>
-                <span>{{ mapStore.parsedRoute(mode.queryName)[0].route.duration}}</span>
-              </div>
-              <div class="flex flex-col justify-start gap-4 px-4"
-              v-else>
-                <span>No route found for this type of transportation</span>
-              </div> -->
-              <!-- <div class="flex flex-col justify-start gap-4 px-4"
-              v-if="available(mode.queryName)">
-                <span>{{ mapStore.parsedRoute(mode.queryName)[0].availability}}</span>
-              </div> -->
+                v-else> 
+                  Pilih mode transportasi
+                </div>
             </v-tabs-window-item>
           </v-tabs-window>
         </v-card-text>
@@ -127,6 +116,7 @@ const formattedAddress = computed(()=> mapStore.$state.textSearchResponse.format
 const loading = computed(()=> mapStore.$state.responseLoading);
 const userLocation = computed(()=> mapStore.$state.currentUserLocation);
 const route = computed(()=> mapStore.$state.routes);
+const transportLoading = computed(()=> mapStore.$state.transportLoading);
 
 const tab = defineModel();
 
@@ -141,6 +131,7 @@ const props = defineProps({
 const secondsToHHmmss = (seconds) => {
   return (new Date(parseInt(seconds) * 1000)).toUTCString().match(/(\d\d:\d\d:\d\d)/)[0];
 }
+
 
 const transportMode = [
   {
@@ -164,6 +155,12 @@ const transportMode = [
     queryName: "TRANSIT",
   }
 ]
+
+onMounted(()=>{
+  mapStore.$patch({
+    transportLoading: true
+  })
+})
 
 </script>
 

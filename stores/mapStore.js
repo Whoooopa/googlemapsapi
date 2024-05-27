@@ -55,6 +55,8 @@ export const useMapStore = defineStore(
       routeEncoder: null,
       routes: [],
       routeCoordinates: [],
+      transportLoading: false,
+      availableLoading: false,
 
     };},
   getters: {
@@ -303,6 +305,8 @@ export const useMapStore = defineStore(
 
     async COMPUTE_ROUTE(mode){
 
+      this.transportLoading = true;
+
       
       console.log(this.parsedTextSearchResponse); 
       const { photos, rating, reviews, ...placeInfos } = this.parsedTextSearchResponse;
@@ -329,6 +333,7 @@ export const useMapStore = defineStore(
         // if previously saved routes destination differ from current textSearchResponse (if user changes destination)
         if(this.parsedRoute(mode).length != 0 && this.parsedRoute(mode)[0].destination.id != this.parsedTextSearchResponse.id){
           this.routes = [];
+          console.log("New destination");
         }
 
         // if state.routes array doesn't have object with object.mode == mode request route
@@ -411,7 +416,7 @@ export const useMapStore = defineStore(
         
       }
       catch(e){
-        // console.log(e);
+        console.log(e);
         // console.log(e.response.data.error.message);
         // if no error message is no route available, push object with false availability
         const msg = e.response.data.error.message;
@@ -429,6 +434,9 @@ export const useMapStore = defineStore(
           }
         }
         console.log(this.parsedRoute("all"));
+      }
+      finally{
+        this.transportLoading = false;
       }
     }
 
